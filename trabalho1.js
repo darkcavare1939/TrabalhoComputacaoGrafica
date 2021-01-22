@@ -155,6 +155,7 @@ function main() {
         }
         // o carro move para direcao do angulo em relacao a X
         // 
+		
         if (keyboard.pressed("up")) {
 			flag = 1;						
 						
@@ -170,7 +171,7 @@ function main() {
 				flag2 = 1;
 			}
 			
-			if(flag2 == 1)
+			if(flag2 == 1 && !keyboard.pressed("down"))
 			{
 				chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(anguloX), speed, 0));
                 chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX)));
@@ -194,7 +195,7 @@ function main() {
 				flag2 = 2;
 			}
 			
-			if(flag2 == 2)
+			if(flag2 == 2 && !keyboard.pressed("up"))
 			{
 				chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(-anguloX), -speed, 0));
                 chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX)));
