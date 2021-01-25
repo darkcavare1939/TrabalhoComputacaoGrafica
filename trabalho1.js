@@ -96,9 +96,6 @@ function main() {
     //rotaciona os angulos das pecas
     rotate();
 
-    var cubeAxesHelper = new THREE.AxesHelper(9);
-    chassi.add(cubeAxesHelper);
-
     // Listen window size changes
     window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
     render();
