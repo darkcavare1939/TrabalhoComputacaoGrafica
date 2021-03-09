@@ -10,15 +10,40 @@ function main() {
 	var MatrixGlobal = new THREE.Matrix4();
 	var group = new THREE.Group();
 	var lightColor = "rgb(255,255,255)";
-
-
+	var luzPoste08;
+	var luzPoste07;
+    var luzPoste06;
+	var luzPoste05;
+	var luzPoste04;
+	var luzPoste03;
+	var luzPoste02;
+	var luzPoste01;
+	var modoCamera = 2;
     // Show text information onscreen
     showInformation();
+	const geometryCamera = new THREE.BoxGeometry( 1, 1, 1 );
+	const materialCamera = new THREE.MeshPhongMaterial( {color: 0xDCDCDC} );
+	const cubeCamera = new THREE.Mesh( geometryCamera, materialCamera );
+	
+	
 
     // To use the keyboard
     var keyboard = new KeyboardState();
-	var plane = createGroundPlane(700.0, 700.5);
+	//var plane = criarPlano(700.0, 700.5);
+	
+	var gcolor = "rgb(200,200,200)";
+	var planeGeometry = new THREE.PlaneGeometry(700.0, 700.5, 400, 400);
+	var planeMaterial = new THREE.MeshLambertMaterial({color:gcolor, side:THREE.DoubleSide});
+	//  var planeMaterial = new THREE.MeshLambertMaterial({color:"rgb(255,0,0)", side:THREE.DoubleSide});
+	var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+	plane.receiveShadow = true;
 	scene.add(plane);
+	
+	/*var wireframe = new THREE.WireframeGeometry(planeGeometry);
+    var line = new THREE.LineSegments(wireframe);
+    line.material.color.setStyle("rgb(0, 0, 0)");
+    scene.add(line);*/
+
 	
 
     // Enable mouse rotation, pan, zoom etc.
@@ -80,62 +105,62 @@ function main() {
     const rodaTraseiraDireita = roda();
     const rodaDianteiraEsquerda = roda();
     const rodaTraseiraEsquerda = roda();
+
 	
-	
-	var mat42 = new THREE.Matrix4();
-	
+
+	var mat42 = new THREE.Matrix4();	
 	//constrói os postes da tela 
 	const poste08 = poste();
 	poste08.matrix.multiply(mat42.makeTranslation(-120, 0, 0));
 	poste08.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-270)));
-	var luzPoste08 = poste08.getObjectByName('LuzPoste');
+	luzPoste08 = poste08.getObjectByName('LuzPoste');
 	scene.add(poste08);
   
 	
 	const poste07 = poste();
 	poste07.matrix.multiply(mat42.makeTranslation(90, 150, 0));
 	poste07.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-270)));
-	var luzPoste07 = poste07.getObjectByName('LuzPoste');
+	luzPoste07 = poste07.getObjectByName('LuzPoste');
 	scene.add(poste07);
 	
 	const poste06 = poste();
 	poste06.matrix.multiply(mat42.makeTranslation(-230, 280, 0));
 	poste06.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-270)));
-	var luzPoste06 = poste06.getObjectByName('LuzPoste');
+	luzPoste06 = poste06.getObjectByName('LuzPoste');
 	scene.add(poste06);
 	
 	const poste05 = poste();
 	poste05.matrix.multiply(mat42.makeTranslation(230, 310, 0));
 	poste05.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-90)));
-	var luzPoste05 = poste05.getObjectByName('LuzPoste');
+	luzPoste05 = poste05.getObjectByName('LuzPoste');
 	scene.add(poste05);
 	
 	
 	const poste04 = poste();
 	poste04.matrix.multiply(mat42.makeTranslation(110, -200, 0));
 	poste04.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-180)));
-	var luzPoste04 = poste04.getObjectByName('LuzPoste');
+	luzPoste04 = poste04.getObjectByName('LuzPoste');
 	scene.add(poste04);
 	
 	const poste03 = poste();
 	poste03.matrix.multiply(mat42.makeTranslation(10, -200, 0));
 	poste03.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-180)));
-	var luzPoste03 = poste03.getObjectByName('LuzPoste');
+	luzPoste03 = poste03.getObjectByName('LuzPoste');
 	scene.add(poste03);
 	
 	const poste02 = poste();
 	poste02.matrix.multiply(mat42.makeTranslation(-90, -200, 0));
 	poste02.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-180)));
-	var luzPoste02 = poste02.getObjectByName('LuzPoste');
+	luzPoste02 = poste02.getObjectByName('LuzPoste');
 	scene.add(poste02); 
 
 	
 	const poste01 = poste();
 	poste01.matrix.multiply(mat42.makeTranslation(-190, -200, 0));
 	poste01.matrix.multiply(mat42.makeRotationZ(degreesToRadians(-180)));
-    var luzPoste01 = poste01.getObjectByName('LuzPoste');
+    luzPoste01 = poste01.getObjectByName('LuzPoste');
 	scene.add(poste01);
-
+    
 	
     const eixoFrontal = eixo();
     const eixoTraseiro = eixo();
@@ -190,6 +215,8 @@ function main() {
     //variáveis que guardam qual foi última direção(frente ou trás) que o carro andou.
     var flagDesaceleracaoAutomatica = 0;
     var flagDesaceleracaoManual = 0;
+	var flagVirandoparaEsquerda = 0;
+	var flagVirandoparaDireita = 0;
 
     // variavel que controla o angulo de rotacao das rodas para elas nao girarem 360* tambem direciona o angulo de rotacao do eixo X
     var anguloX = 0;
@@ -267,24 +294,42 @@ function main() {
 	spotLight.visible = true;
     }    
 	
-
+    
     //funcao principal que movimenta os carros
     function movimentacaoCarro() {
         keyboard.update();
-
         //rotaciona as rodas
         if (keyboard.pressed("left") && anguloX > anguloEsquerdoMaximo) {
 
             rodaDianteiraDireita.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloPadrao)));
             rodaDianteiraEsquerda.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloPadrao)));
             anguloX = rodaDianteiraDireita.matrix.elements[0] + 0.1;
+			flagVirandoparaEsquerda = 1;
+			flagVirandoparaDireita = 0;
         }
         if (keyboard.pressed("right") && anguloX < anguloDireitoMaximo) {
 
             rodaDianteiraDireita.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloPadrao)));
             rodaDianteiraEsquerda.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloPadrao)));
             anguloX = rodaDianteiraDireita.matrix.elements[0] - 0.1;
+			flagVirandoparaDireita = 1;
+			flagVirandoparaEsquerda = 0;
         }
+		
+		if(!keyboard.pressed("left") && flagVirandoparaEsquerda == 1 && anguloX <= 0)
+		{
+			
+			rodaDianteiraDireita.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloPadrao)));
+            rodaDianteiraEsquerda.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloPadrao)));
+			anguloX = rodaDianteiraDireita.matrix.elements[0] - 0.1;
+		}
+		
+		if(!keyboard.pressed("right") && flagVirandoparaDireita == 1 && anguloX >= 0)
+		{		
+			rodaDianteiraDireita.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloPadrao)));
+            rodaDianteiraEsquerda.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloPadrao)));
+            anguloX = rodaDianteiraDireita.matrix.elements[0] + 0.1;
+		}
 
         //altera o modo da câmera  
         if (keyboard.down("space")) changeCameraMode();
@@ -292,6 +337,7 @@ function main() {
         //impede a movimentação do carro no modo inspeção. 
         if (inspect === false) {
 			//console.log("1");
+			
             var position = new THREE.Vector3();
             var quaternion = new THREE.Quaternion();
             var scale = new THREE.Vector3();
@@ -300,12 +346,14 @@ function main() {
             var rotZ = Math.sin(anguloX);
             var distance = 26.925824;
             chassi.matrixWorld.decompose(position, quaternion, scale);
+			window.addEventListener('wheel', onMouseWheel, true);
             // o carro move para direcao do angulo em relacao a X
             if (keyboard.pressed("up")) {
+				
                 flagDesaceleracaoAutomatica = 1;
                 if (speed > 0 && flagDesaceleracaoManual == 2) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(-anguloX), -speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX*3)));
                     speed = speed - 0.01;
                 }
 
@@ -315,17 +363,18 @@ function main() {
 
                 if (flagDesaceleracaoManual == 1 && !keyboard.pressed("down")) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(anguloX), speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX*3)));
                     if (speed <= 2) {
                         speed = speed + 0.01;
                     }
                 }
             }
             if (keyboard.pressed("down")) {
+				
                 flagDesaceleracaoAutomatica = 2;
                 if (speed > 0 && flagDesaceleracaoManual == 1) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(anguloX), speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX*3)));
                     speed = speed - 0.01;
                 }
 
@@ -335,7 +384,7 @@ function main() {
 
                 if (flagDesaceleracaoManual == 2 && !keyboard.pressed("up")) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(-anguloX), -speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX*3)));
                     if (speed <= 2) {
                         speed = speed + 0.01;
                     }
@@ -346,21 +395,27 @@ function main() {
             if (!keyboard.pressed("up") && !keyboard.pressed("down")) {
                 if (speed >= 0.1 && flagDesaceleracaoAutomatica == 1) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(anguloX), speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(-anguloX*3)));
                     speed = speed - 0.007;
                 }
 
                 if (speed >= 0.1 && flagDesaceleracaoAutomatica == 2) {
                     chassi.matrix.multiply(mat4.makeTranslation(degreesToRadians(-anguloX), -speed, 0));
-                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX)));
+                    chassi.matrix.multiply(mat4.makeRotationZ(degreesToRadians(anguloX*3)));
                     speed = speed - 0.007;
                 }
 
             }
 				
-			console.log("entrei");	
-            camera.lookAt(position);
+			if(modoCamera === 2 )
+			{
+				console.log("cvp");
+				console.log(modoCamera);
+				camera.lookAt(position);	
+			}
+            //camera.lookAt(position);
 			MatrixGlobal.copy(chassi.matrix);
+			
         }
     }
 
@@ -371,13 +426,12 @@ function main() {
          resetMatrix();
 		 if(inspect === false)
 		 {
-			 carInicialPosition();		 
-			 chassi.matrix.copy(MatrixGlobal);			 		 
+			 carInicialPosition();				 
+			 chassi.matrix.copy(MatrixGlobal);	
 		 }
 		 else
 		 {
-			carInicialPosition();			
-            //	chassi.matrix.copy(MatrixGlobal);				
+			carInicialPosition();							
 		 }
          
          rotate();	
@@ -728,6 +782,7 @@ function main() {
     function cameraModoInspecao() {
         inspect = true;
         chassi.remove(camera);
+		apoioBanco.remove(cubeCamera);
         trackballControls = initTrackballControls(camera, renderer);
 		camera.position.x = -15;
         camera.position.y = 15;
@@ -753,6 +808,7 @@ function main() {
     function cameraModoJogo() {
 
         inspect = false;
+		apoioBanco.remove(cubeCamera);
         speed = 0;
         anguloX = 0;
         scene.add(plane);
@@ -760,17 +816,56 @@ function main() {
         camera = changeCamera(new THREE.Vector3(0, -25, 10));
         resetarCarro();
         chassi.add(camera);
+		scene.add(poste08);
+		scene.add(poste07);
+		scene.add(poste06);
+		scene.add(poste05);
+		scene.add(poste04);
+		scene.add(poste03);
+		scene.add(poste02);
+		scene.add(poste01);		
     }
+	
+	 function cameraModoCockpit() 
+	{
+		chassi.remove(camera);
+        camera = changeCamera(new THREE.Vector3(0, 0.8, 0.4));
+		
+		/*const geometry7 = new THREE.BoxGeometry( 1, 1, 1 );
+		const material7 = new THREE.MeshPhongMaterial( {color: 0xDCDCDC} );
+		const cube2 = new THREE.Mesh( geometry7, material7 );*/
+		//camera.position.set(0, 2, -5);
+        //camera.lookAt(new THREE.Vector3(0, 250, 0));
+		cubeCamera.add(camera);
+		apoioBanco.add(cubeCamera);
+	    /*camera.position.copy(new THREE.Vector3(0, -2, 2));			  
+			  console.log("2B")	
+			  camera.fov = 40;
+		      camera.updateProjectionMatrix();*/	 
+		 
+	}
 
     // controla o modo da câmera 
     function changeCameraMode() {
-        if (inspect === true) {
+        if (inspect === true && modoCamera === 1 ) {
             cameraModoJogo();
+			modoCamera = 2;
+			console.log("1A")
         }
         else {
-            cameraModoInspecao();
-        }
-    }
+			if(modoCamera === 2)
+			{
+			  cameraModoCockpit();				 
+			  modoCamera = 3	
+			}
+			else
+			{
+			console.log("3C")	
+			modoCamera = 1;
+            cameraModoInspecao();			
+			}
+		}
+	}
     function showInformation() {
         // Use this to show information onscreen
         controls = new InfoBox();
@@ -787,10 +882,29 @@ function main() {
         if (inspect === true)
             trackballControls.update();
         movimentacaoCarro();
+		
         //lightFollowingCamera(light, camera);
         requestAnimationFrame(render);		
         renderer.render(scene, camera); // Render scene
     }
+	
+	function onMouseWheel(event) 
+	{
+		if(modoCamera === 2)
+		{			
+			event.preventDefault();
+			camera.fov += event.deltaY / 100;
+			camera.updateProjectionMatrix();
+			//camera.updateProjectionMatrix();
+			//camera.position.z += event.deltaY / 1000;
+			//camera.position.clampScalar(0, 100);
+
+			/*event.preventDefault();
+			var teste = event.deltaY * 0.05;
+			console.log(teste);*/
+		}
+	}
+
 
     //configurações da câmera do jogo
     function changeCamera(initialPosition) {
@@ -840,4 +954,20 @@ function main() {
 	gui.add(controls, 'viewCarro', true)
     .name("Luz Carro")
     .onChange(function(e) { controls.lightCarro() });
+	
+	
+	function criarPlano(width, height, gcolor = null)
+	{
+	  if(!gcolor) gcolor = "rgb(200,200,200)";
+	  // create the ground plane
+	  var planeGeometry = new THREE.PlaneGeometry(width, height, 400, 400);
+	  var planeMaterial = new THREE.MeshLambertMaterial({color:gcolor, side:THREE.DoubleSide});
+	//  var planeMaterial = new THREE.MeshLambertMaterial({color:"rgb(255,0,0)", side:THREE.DoubleSide});
+	  var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+	  plane.receiveShadow = true;
+	  return plane;
+	}
+	
+	
+	
 }
